@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root {
-      color-scheme: light dark;
+      color-scheme: light;
       font-family: "Segoe UI", Roboto, Arial, sans-serif;
       --accent: #0b7285;
       --accent-light: #38b2ac33;
@@ -189,7 +189,28 @@
       border-radius: 8px;
       padding: 0.5rem 0.75rem;
       font-size: 1rem;
-      background: white;
+      background-color: #ffffff;
+      color: #0f172a;
+      -webkit-text-fill-color: #0f172a;
+      caret-color: #0f172a;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #94a3b8;
+      -webkit-text-fill-color: #94a3b8;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus {
+      border: 1px solid #cbd5e1;
+      -webkit-text-fill-color: #0f172a;
+      box-shadow: 0 0 0px 1000px #ffffff inset;
+      transition: background-color 5000s ease-in-out 0s;
     }
 
     .cashflow-table {
@@ -207,6 +228,16 @@
     .cashflow-table th:first-child,
     .cashflow-table td:first-child {
       text-align: left;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 260px;
+      margin-top: 1rem;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.75rem;
     }
 
     .compliance {
@@ -372,17 +403,48 @@
         <thead>
           <tr>
             <th>Année</th>
+            <th>Entrées (k$)</th>
+            <th>Dépenses (k$)</th>
             <th>Flux net (k$)</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>1</td><td><input type="number" data-year="1" value="0" step="0.1"></td></tr>
-          <tr><td>2</td><td><input type="number" data-year="2" value="0" step="0.1"></td></tr>
-          <tr><td>3</td><td><input type="number" data-year="3" value="0" step="0.1"></td></tr>
-          <tr><td>4</td><td><input type="number" data-year="4" value="0" step="0.1"></td></tr>
-          <tr><td>5</td><td><input type="number" data-year="5" value="0" step="0.1"></td></tr>
+          <tr data-year="1">
+            <td>1</td>
+            <td><input type="number" data-year="1" data-kind="in" value="0" step="0.1"></td>
+            <td><input type="number" data-year="1" data-kind="out" value="0" step="0.1"></td>
+            <td><span class="net-value" data-year="1">0.00</span></td>
+          </tr>
+          <tr data-year="2">
+            <td>2</td>
+            <td><input type="number" data-year="2" data-kind="in" value="0" step="0.1"></td>
+            <td><input type="number" data-year="2" data-kind="out" value="0" step="0.1"></td>
+            <td><span class="net-value" data-year="2">0.00</span></td>
+          </tr>
+          <tr data-year="3">
+            <td>3</td>
+            <td><input type="number" data-year="3" data-kind="in" value="0" step="0.1"></td>
+            <td><input type="number" data-year="3" data-kind="out" value="0" step="0.1"></td>
+            <td><span class="net-value" data-year="3">0.00</span></td>
+          </tr>
+          <tr data-year="4">
+            <td>4</td>
+            <td><input type="number" data-year="4" data-kind="in" value="0" step="0.1"></td>
+            <td><input type="number" data-year="4" data-kind="out" value="0" step="0.1"></td>
+            <td><span class="net-value" data-year="4">0.00</span></td>
+          </tr>
+          <tr data-year="5">
+            <td>5</td>
+            <td><input type="number" data-year="5" data-kind="in" value="0" step="0.1"></td>
+            <td><input type="number" data-year="5" data-kind="out" value="0" step="0.1"></td>
+            <td><span class="net-value" data-year="5">0.00</span></td>
+          </tr>
         </tbody>
       </table>
+
+      <div class="chart-wrapper" role="img" aria-label="Graphique des flux de trésorerie">
+        <canvas></canvas>
+      </div>
 
       <div class="actions">
         <button type="button" class="calculate">Calculer</button>
@@ -407,6 +469,7 @@
     </div>
   </template>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
     const teamsContainer = document.getElementById('teams');
     const projectsContainer = document.getElementById('projects');
@@ -456,11 +519,12 @@
       const removeButton = card.querySelector('.remove-project');
       const calculateButton = card.querySelector('.calculate');
       const resetButton = card.querySelector('.reset');
-      const inputs = card.querySelectorAll('tbody input');
       const initialInvestmentInput = card.querySelector('input[name="initialInvestment"]');
       const residualValueInput = card.querySelector('input[name="residualValue"]');
       const tramInput = card.querySelector('input[name="tram"]');
       const discountInput = card.querySelector('input[name="discountRate"]');
+      const cashflowRows = card.querySelectorAll('tbody tr');
+      const chartCanvas = card.querySelector('.chart-wrapper canvas').getContext('2d');
       const npvField = card.querySelector('.npv');
       const irrField = card.querySelector('.irr');
       const paybackField = card.querySelector('.payback');
@@ -473,6 +537,47 @@
         npv: card.querySelector('[data-check="npv"]'),
         irr: card.querySelector('[data-check="irr"]'),
       };
+
+      const chartLabels = ['Année 0', 'Année 1', 'Année 2', 'Année 3', 'Année 4', 'Année 5'];
+      const chart = new Chart(chartCanvas, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            label: 'Flux de trésorerie (k$)',
+            data: Array(chartLabels.length).fill(0),
+            backgroundColor: context => (context.parsed.y ?? 0) >= 0 ? 'rgba(47, 158, 68, 0.7)' : 'rgba(214, 69, 69, 0.7)',
+            borderRadius: 8,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `${context.parsed.y.toFixed(2)} k$`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Année' },
+            },
+            y: {
+              title: { display: true, text: 'k$' },
+              ticks: {
+                callback(value) {
+                  return `${value}`;
+                },
+              },
+            },
+          },
+        },
+      });
 
       function updateBadge(badge, ok) {
         if (!badge) return;
@@ -539,24 +644,73 @@
         return `${value.toFixed(2)} an${value >= 2 ? 's' : ''}`;
       }
 
-      function calculate() {
-        const initialInvestment = parseFloat(initialInvestmentInput.value || '0');
-        const residualValue = parseFloat(residualValueInput.value || '0');
-        const tram = parseFloat(tramInput.value || '0');
-        const discountRate = parseFloat(discountInput.value || '0');
+      function sanitize(value) {
+        return Number.isNaN(value) ? 0 : value;
+      }
 
-        const cashflows = [ -initialInvestment ];
+      function computeRowNet(row) {
+        const inflowInput = row.querySelector('input[data-kind="in"]');
+        const outflowInput = row.querySelector('input[data-kind="out"]');
+        const inflow = sanitize(parseFloat(inflowInput.value || '0'));
+        const outflow = sanitize(parseFloat(outflowInput.value || '0'));
+        return inflow - outflow;
+      }
+
+      function updateRowNet(row) {
+        const net = computeRowNet(row);
+        const netCell = row.querySelector('.net-value');
+        netCell.textContent = net.toFixed(2);
+        return net;
+      }
+
+      function collectCashflows(includeResidualValue = true) {
+        const initialInvestment = sanitize(parseFloat(initialInvestmentInput.value || '0'));
+        const residualValue = sanitize(parseFloat(residualValueInput.value || '0'));
+        const flows = [-initialInvestment];
         let yearsCompleted = 0;
-        inputs.forEach(input => {
-          const year = Number(input.dataset.year);
-          let value = parseFloat(input.value || '0');
-          if (Number.isNaN(value)) value = 0;
-          if (year === 5) {
-            value += residualValue;
+        cashflowRows.forEach(row => {
+          const year = Number(row.dataset.year);
+          const net = computeRowNet(row);
+          let total = net;
+          if (includeResidualValue && year === 5) {
+            total += residualValue;
           }
-          cashflows.push(value);
+          flows.push(total);
           yearsCompleted = Math.max(yearsCompleted, year);
         });
+        return { flows, yearsCompleted };
+      }
+
+      function updateAllNets() {
+        cashflowRows.forEach(updateRowNet);
+      }
+
+      function updateChart() {
+        const { flows } = collectCashflows(true);
+        chart.data.datasets[0].data = flows;
+        chart.update();
+      }
+
+      cashflowRows.forEach(row => {
+        row.querySelectorAll('input').forEach(input => {
+          input.addEventListener('input', () => {
+            updateRowNet(row);
+            updateChart();
+          });
+        });
+      });
+
+      updateAllNets();
+      updateChart();
+
+      function calculate() {
+        const initialInvestment = sanitize(parseFloat(initialInvestmentInput.value || '0'));
+        const tram = sanitize(parseFloat(tramInput.value || '0'));
+        const discountRate = sanitize(parseFloat(discountInput.value || '0'));
+
+        updateAllNets();
+        const { flows: cashflows, yearsCompleted } = collectCashflows(true);
+        updateChart();
 
         const discount = discountRate / 100;
         const npv = computeNPV(cashflows, discount);
@@ -590,11 +744,20 @@
           badge.textContent = 'À vérifier';
           badge.className = 'badge';
         });
+        updateAllNets();
+        updateChart();
       }
 
       calculateButton.addEventListener('click', calculate);
       resetButton.addEventListener('click', reset);
-      removeButton.addEventListener('click', () => card.remove());
+      removeButton.addEventListener('click', () => {
+        chart.destroy();
+        card.remove();
+      });
+
+      [initialInvestmentInput, residualValueInput].forEach(input => {
+        input.addEventListener('input', updateChart);
+      });
 
       projectsContainer.appendChild(card);
     }
