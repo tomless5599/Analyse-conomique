@@ -240,6 +240,12 @@
       padding: 0.75rem;
     }
 
+    .chart-wrapper canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
     .compliance {
       border-radius: 12px;
       padding: 1rem;
@@ -469,8 +475,103 @@
     </div>
   </template>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
+    function drawCashflowChart(canvas, flows) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      if (!Array.isArray(flows) || flows.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      const deviceRatio = window.devicePixelRatio || 1;
+      const displayWidth = canvas.clientWidth || 300;
+      const displayHeight = canvas.clientHeight || 220;
+
+      const needsResize = canvas.width !== displayWidth * deviceRatio || canvas.height !== displayHeight * deviceRatio;
+      if (needsResize) {
+        canvas.width = displayWidth * deviceRatio;
+        canvas.height = displayHeight * deviceRatio;
+      }
+
+      ctx.save();
+      ctx.scale(deviceRatio, deviceRatio);
+
+      ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+      const padding = 36;
+      const chartWidth = displayWidth - padding * 2;
+      const chartHeight = displayHeight - padding * 2;
+
+      const labels = flows.map((_, index) => (index === 0 ? 'Année 0' : `Année ${index}`));
+      const max = Math.max(...flows, 0);
+      const min = Math.min(...flows, 0);
+      const range = Math.abs(max - min) < 1e-6 ? 1 : max - min;
+      const uniformZero = Math.abs(max) < 1e-6 && Math.abs(min) < 1e-6;
+      let zeroY;
+      if (uniformZero) {
+        zeroY = displayHeight - padding;
+      } else if (max <= 0) {
+        zeroY = padding;
+      } else if (min >= 0) {
+        zeroY = displayHeight - padding;
+      } else {
+        zeroY = padding + (max / range) * chartHeight;
+      }
+      const barWidth = chartWidth / flows.length * 0.6;
+
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, displayHeight - padding);
+      ctx.lineTo(displayWidth - padding, displayHeight - padding);
+      ctx.stroke();
+
+      const steps = 4;
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px "Segoe UI", sans-serif';
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= steps; i++) {
+        const value = uniformZero ? 0 : max - (range * i) / steps;
+        const y = padding + (chartHeight * i) / steps;
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(displayWidth - padding, y);
+        ctx.stroke();
+        ctx.fillText(`${value.toFixed(1)} k$`, padding - 6, y + 4);
+      }
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '12px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      labels.forEach((label, index) => {
+        const x = padding + (chartWidth / flows.length) * index + (chartWidth / flows.length) / 2;
+        ctx.fillText(label, x, displayHeight - padding + 16);
+      });
+
+      ctx.strokeStyle = '#64748b';
+      ctx.beginPath();
+      ctx.moveTo(padding, zeroY);
+      ctx.lineTo(displayWidth - padding, zeroY);
+      ctx.stroke();
+
+      flows.forEach((value, index) => {
+        const step = chartWidth / flows.length;
+        const x = padding + step * index + (step - barWidth) / 2;
+        const scaledHeight = (value / range) * chartHeight;
+        const y = zeroY - scaledHeight;
+        const height = Math.abs(scaledHeight);
+        ctx.fillStyle = value >= 0 ? 'rgba(47, 158, 68, 0.8)' : 'rgba(214, 69, 69, 0.8)';
+        ctx.fillRect(x, scaledHeight >= 0 ? y : zeroY, barWidth, height);
+      });
+
+      ctx.restore();
+    }
+
     const teamsContainer = document.getElementById('teams');
     const projectsContainer = document.getElementById('projects');
     const teamTemplate = document.getElementById('teamTemplate');
@@ -524,7 +625,7 @@
       const tramInput = card.querySelector('input[name="tram"]');
       const discountInput = card.querySelector('input[name="discountRate"]');
       const cashflowRows = card.querySelectorAll('tbody tr');
-      const chartCanvas = card.querySelector('.chart-wrapper canvas').getContext('2d');
+      const chartCanvas = card.querySelector('.chart-wrapper canvas');
       const npvField = card.querySelector('.npv');
       const irrField = card.querySelector('.irr');
       const paybackField = card.querySelector('.payback');
@@ -538,46 +639,7 @@
         irr: card.querySelector('[data-check="irr"]'),
       };
 
-      const chartLabels = ['Année 0', 'Année 1', 'Année 2', 'Année 3', 'Année 4', 'Année 5'];
-      const chart = new Chart(chartCanvas, {
-        type: 'bar',
-        data: {
-          labels: chartLabels,
-          datasets: [{
-            label: 'Flux de trésorerie (k$)',
-            data: Array(chartLabels.length).fill(0),
-            backgroundColor: context => (context.parsed.y ?? 0) >= 0 ? 'rgba(47, 158, 68, 0.7)' : 'rgba(214, 69, 69, 0.7)',
-            borderRadius: 8,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label(context) {
-                  return `${context.parsed.y.toFixed(2)} k$`;
-                },
-              },
-            },
-          },
-          scales: {
-            x: {
-              title: { display: true, text: 'Année' },
-            },
-            y: {
-              title: { display: true, text: 'k$' },
-              ticks: {
-                callback(value) {
-                  return `${value}`;
-                },
-              },
-            },
-          },
-        },
-      });
+      projectsContainer.appendChild(card);
 
       function updateBadge(badge, ok) {
         if (!badge) return;
@@ -687,8 +749,7 @@
 
       function updateChart() {
         const { flows } = collectCashflows(true);
-        chart.data.datasets[0].data = flows;
-        chart.update();
+        drawCashflowChart(chartCanvas, flows);
       }
 
       cashflowRows.forEach(row => {
@@ -748,10 +809,12 @@
         updateChart();
       }
 
+      const handleResize = () => updateChart();
+
       calculateButton.addEventListener('click', calculate);
       resetButton.addEventListener('click', reset);
       removeButton.addEventListener('click', () => {
-        chart.destroy();
+        window.removeEventListener('resize', handleResize);
         card.remove();
       });
 
@@ -759,7 +822,7 @@
         input.addEventListener('input', updateChart);
       });
 
-      projectsContainer.appendChild(card);
+      window.addEventListener('resize', handleResize);
     }
 
     function exportScores() {
