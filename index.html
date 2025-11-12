@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Évaluation des équipes - Analyse économique</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      --accent: #0b7285;
+      --accent-light: #38b2ac33;
+      --danger: #d64545;
+      --ok: #2f9e44;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f6f7fb;
+      color: #1f2933;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--accent), #1c92d2);
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    main {
+      padding: 1.5rem;
+      max-width: 1100px;
+      margin: auto;
+      display: grid;
+      gap: 2rem;
+    }
+
+    section {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+      padding: 1.5rem;
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p.description {
+      margin-bottom: 1.5rem;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    .teams-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .team-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #f8fafc;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .team-header {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .team-header input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .criteria-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .criteria-table th,
+    .criteria-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    .criteria-table th {
+      text-align: left;
+      font-weight: 600;
+      color: #1f2933;
+    }
+
+    .criteria-table input[type="number"] {
+      width: 5rem;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      text-align: right;
+    }
+
+    .total {
+      font-size: 1.15rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+    }
+
+    .total-value {
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(12, 128, 144, 0.25);
+    }
+
+    button.secondary {
+      background: #334155;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .finance-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .project-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #f8fafc;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    textarea {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      background: white;
+    }
+
+    .cashflow-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .cashflow-table th,
+    .cashflow-table td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.5rem;
+      text-align: right;
+    }
+
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+      text-align: left;
+    }
+
+    .compliance {
+      border-radius: 12px;
+      padding: 1rem;
+      background: #f1f5f9;
+      border: 1px solid #d9e3f0;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .compliance p {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge.ok {
+      background: rgba(47, 158, 68, 0.2);
+      color: var(--ok);
+    }
+
+    .badge.ko {
+      background: rgba(214, 69, 69, 0.18);
+      color: var(--danger);
+    }
+
+    .results {
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.95rem;
+      color: #1f2933;
+    }
+
+    .results strong {
+      color: #0f172a;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem 0;
+      color: #64748b;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 1.5rem 1rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      .criteria-table th,
+      .criteria-table td {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Plateforme d'évaluation - Idéathon d'analyse économique</h1>
+    <p>Suivez les critères d'évaluation, vérifiez le respect des paramètres financiers et consolidez les résultats de vos projets.</p>
+  </header>
+
+  <main>
+    <section aria-labelledby="evaluation">
+      <h2 id="evaluation">Évaluation des équipes</h2>
+      <p class="description">Attribuez une note pour chacun des dix critères (0 à 10). Ajoutez autant d'équipes que nécessaire et obtenez automatiquement le score total sur 100.</p>
+      <div class="actions">
+        <button id="addTeam">Ajouter une équipe</button>
+        <button id="exportScores" class="secondary">Exporter les résultats (CSV)</button>
+      </div>
+      <div id="teams" class="teams-container" aria-live="polite"></div>
+    </section>
+
+    <section aria-labelledby="finance">
+      <h2 id="finance">Analyse économique et conformité financière</h2>
+      <p class="description">Complétez les paramètres financiers pour chacun de vos deux projets. Les calculs essentiels (VAN, TRI, délai de récupération) sont générés automatiquement et la conformité aux consignes est indiquée.</p>
+      <div class="actions">
+        <button id="addProject">Ajouter un projet</button>
+      </div>
+      <div id="projects" class="finance-grid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Activité pédagogique - Département de génie. Tous droits réservés.</small>
+  </footer>
+
+  <template id="teamTemplate">
+    <div class="team-card">
+      <div class="team-header">
+        <label style="flex:1;">
+          <span>Nom de l'équipe</span>
+          <input type="text" name="teamName" placeholder="Équipe 1" required>
+        </label>
+        <button type="button" class="secondary remove-team">Supprimer</button>
+      </div>
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Critère</th>
+            <th>Note (0-10)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Originalité et pertinence de la solution</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Qualité du prototype (Lego, clarté)</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Application du canevas Real–Win–Worth</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Niveau d’innovation technologique</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Analyse économique et financière</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Gestion d’équipe</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Potentiel de mise en œuvre (12 mois, &lt; 100 k$)</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Proactivité</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Qualité du pitch</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+          <tr><td>Respect des consignes et règles</td><td><input type="number" min="0" max="10" step="0.1" value="0"></td></tr>
+        </tbody>
+      </table>
+      <div class="total" aria-live="polite">
+        <span>Score total</span>
+        <span class="total-value">0 / 100</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="projectTemplate">
+    <div class="project-card">
+      <div class="team-header">
+        <label style="flex:1;">
+          <span>Nom du projet</span>
+          <input type="text" name="projectName" placeholder="Projet A" required>
+        </label>
+        <button type="button" class="secondary remove-project">Supprimer</button>
+      </div>
+
+      <div class="grid-2">
+        <label>Investissement initial (k$)
+          <input type="number" name="initialInvestment" value="40" step="0.1">
+        </label>
+        <label>Valeur résiduelle en année 5 (k$)
+          <input type="number" name="residualValue" value="0" step="0.1">
+        </label>
+        <label>TRAM attendu (%)
+          <input type="number" name="tram" value="15" step="0.1">
+        </label>
+        <label>Taux d’actualisation (%)
+          <input type="number" name="discountRate" value="15" step="0.1">
+        </label>
+      </div>
+
+      <table class="cashflow-table">
+        <thead>
+          <tr>
+            <th>Année</th>
+            <th>Flux net (k$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><input type="number" data-year="1" value="0" step="0.1"></td></tr>
+          <tr><td>2</td><td><input type="number" data-year="2" value="0" step="0.1"></td></tr>
+          <tr><td>3</td><td><input type="number" data-year="3" value="0" step="0.1"></td></tr>
+          <tr><td>4</td><td><input type="number" data-year="4" value="0" step="0.1"></td></tr>
+          <tr><td>5</td><td><input type="number" data-year="5" value="0" step="0.1"></td></tr>
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button type="button" class="calculate">Calculer</button>
+        <button type="button" class="reset">Réinitialiser</button>
+      </div>
+
+      <div class="results" aria-live="polite">
+        <div><strong>VAN :</strong> <span class="npv">—</span></div>
+        <div><strong>TRI :</strong> <span class="irr">—</span></div>
+        <div><strong>Délai de récupération :</strong> <span class="payback">—</span></div>
+      </div>
+
+      <div class="compliance" aria-live="polite">
+        <p><span class="badge" data-check="investment">À vérifier</span> Investissement initial entre 40 k$ et 60 k$.</p>
+        <p><span class="badge" data-check="duration">À vérifier</span> Durée de vie = 5 ans (flux remplis pour 5 ans).</p>
+        <p><span class="badge" data-check="tram">À vérifier</span> TRAM minimal de 15 %.</p>
+        <p><span class="badge" data-check="discount">À vérifier</span> Taux d’actualisation identique (15 %).</p>
+        <p><span class="badge" data-check="payback">À vérifier</span> Délai de récupération calculé.</p>
+        <p><span class="badge" data-check="npv">À vérifier</span> VAN calculée.</p>
+        <p><span class="badge" data-check="irr">À vérifier</span> TRI calculé.</p>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const teamsContainer = document.getElementById('teams');
+    const projectsContainer = document.getElementById('projects');
+    const teamTemplate = document.getElementById('teamTemplate');
+    const projectTemplate = document.getElementById('projectTemplate');
+
+    function clampScore(value) {
+      if (Number.isNaN(value)) return 0;
+      return Math.min(10, Math.max(0, value));
+    }
+
+    function addTeam() {
+      const node = teamTemplate.content.cloneNode(true);
+      const card = node.querySelector('.team-card');
+      const inputs = card.querySelectorAll('tbody input');
+      const total = card.querySelector('.total-value');
+      const removeButton = card.querySelector('.remove-team');
+
+      function updateTotal() {
+        let sum = 0;
+        inputs.forEach(input => {
+          const value = clampScore(parseFloat(input.value));
+          if (value !== parseFloat(input.value)) {
+            input.value = value.toFixed(1);
+          }
+          sum += value;
+        });
+        total.textContent = `${sum.toFixed(1)} / 100`;
+      }
+
+      inputs.forEach(input => {
+        input.addEventListener('input', updateTotal);
+        input.addEventListener('blur', updateTotal);
+      });
+
+      removeButton.addEventListener('click', () => {
+        card.remove();
+      });
+
+      updateTotal();
+      teamsContainer.appendChild(card);
+    }
+
+    function addProject() {
+      const node = projectTemplate.content.cloneNode(true);
+      const card = node.querySelector('.project-card');
+      const removeButton = card.querySelector('.remove-project');
+      const calculateButton = card.querySelector('.calculate');
+      const resetButton = card.querySelector('.reset');
+      const inputs = card.querySelectorAll('tbody input');
+      const initialInvestmentInput = card.querySelector('input[name="initialInvestment"]');
+      const residualValueInput = card.querySelector('input[name="residualValue"]');
+      const tramInput = card.querySelector('input[name="tram"]');
+      const discountInput = card.querySelector('input[name="discountRate"]');
+      const npvField = card.querySelector('.npv');
+      const irrField = card.querySelector('.irr');
+      const paybackField = card.querySelector('.payback');
+      const badges = {
+        investment: card.querySelector('[data-check="investment"]'),
+        duration: card.querySelector('[data-check="duration"]'),
+        tram: card.querySelector('[data-check="tram"]'),
+        discount: card.querySelector('[data-check="discount"]'),
+        payback: card.querySelector('[data-check="payback"]'),
+        npv: card.querySelector('[data-check="npv"]'),
+        irr: card.querySelector('[data-check="irr"]'),
+      };
+
+      function updateBadge(badge, ok) {
+        if (!badge) return;
+        badge.textContent = ok ? 'Conforme' : 'À corriger';
+        badge.className = `badge ${ok ? 'ok' : 'ko'}`;
+      }
+
+      function computeNPV(cashflows, rate) {
+        return cashflows.reduce((acc, value, index) => {
+          return acc + value / Math.pow(1 + rate, index);
+        }, 0);
+      }
+
+      function computeIRR(cashflows, guess = 0.1) {
+        const maxIter = 100;
+        const precision = 1e-7;
+        let rate = guess;
+        for (let i = 0; i < maxIter; i++) {
+          const npv = cashflows.reduce((acc, value, index) => acc + value / Math.pow(1 + rate, index), 0);
+          const derivative = cashflows.reduce((acc, value, index) => {
+            if (index === 0) return acc;
+            return acc - index * value / Math.pow(1 + rate, index + 1);
+          }, 0);
+          if (Math.abs(derivative) < precision) break;
+          const newRate = rate - npv / derivative;
+          if (!Number.isFinite(newRate)) break;
+          if (Math.abs(newRate - rate) <= precision) {
+            rate = newRate;
+            break;
+          }
+          rate = newRate;
+        }
+        return rate;
+      }
+
+      function computePayback(cashflows) {
+        let cumulative = cashflows[0];
+        if (cumulative >= 0) {
+          return 0;
+        }
+        for (let i = 1; i < cashflows.length; i++) {
+          const prev = cumulative;
+          cumulative += cashflows[i];
+          if (cumulative >= 0) {
+            const fraction = cashflows[i] !== 0 ? (0 - prev) / cashflows[i] : 0;
+            return (i - 1) + fraction;
+          }
+        }
+        return Infinity;
+      }
+
+      function formatCurrency(value) {
+        if (!Number.isFinite(value)) return '—';
+        return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 }).format(value * 1000);
+      }
+
+      function formatPercent(value) {
+        if (!Number.isFinite(value)) return '—';
+        return `${(value * 100).toFixed(2)} %`;
+      }
+
+      function formatYears(value) {
+        if (!Number.isFinite(value)) return '—';
+        return `${value.toFixed(2)} an${value >= 2 ? 's' : ''}`;
+      }
+
+      function calculate() {
+        const initialInvestment = parseFloat(initialInvestmentInput.value || '0');
+        const residualValue = parseFloat(residualValueInput.value || '0');
+        const tram = parseFloat(tramInput.value || '0');
+        const discountRate = parseFloat(discountInput.value || '0');
+
+        const cashflows = [ -initialInvestment ];
+        let yearsCompleted = 0;
+        inputs.forEach(input => {
+          const year = Number(input.dataset.year);
+          let value = parseFloat(input.value || '0');
+          if (Number.isNaN(value)) value = 0;
+          if (year === 5) {
+            value += residualValue;
+          }
+          cashflows.push(value);
+          yearsCompleted = Math.max(yearsCompleted, year);
+        });
+
+        const discount = discountRate / 100;
+        const npv = computeNPV(cashflows, discount);
+        const irr = computeIRR(cashflows, 0.2);
+        const payback = computePayback(cashflows);
+
+        npvField.textContent = formatCurrency(npv);
+        irrField.textContent = Number.isFinite(irr) ? formatPercent(irr) : '—';
+        paybackField.textContent = Number.isFinite(payback) ? formatYears(payback) : '—';
+
+        updateBadge(badges.investment, initialInvestment >= 40 && initialInvestment <= 60);
+        updateBadge(badges.duration, yearsCompleted === 5);
+        updateBadge(badges.tram, tram >= 15);
+        updateBadge(badges.discount, Math.abs(discountRate - 15) < 1e-6);
+        updateBadge(badges.payback, Number.isFinite(payback));
+        updateBadge(badges.npv, Number.isFinite(npv));
+        updateBadge(badges.irr, Number.isFinite(irr));
+      }
+
+      function reset() {
+        card.querySelectorAll('input').forEach(input => {
+          if (input.name === 'initialInvestment') input.value = 40;
+          else if (input.name === 'residualValue') input.value = 0;
+          else if (input.name === 'tram' || input.name === 'discountRate') input.value = 15;
+          else input.value = 0;
+        });
+        npvField.textContent = '—';
+        irrField.textContent = '—';
+        paybackField.textContent = '—';
+        Object.values(badges).forEach(badge => {
+          badge.textContent = 'À vérifier';
+          badge.className = 'badge';
+        });
+      }
+
+      calculateButton.addEventListener('click', calculate);
+      resetButton.addEventListener('click', reset);
+      removeButton.addEventListener('click', () => card.remove());
+
+      projectsContainer.appendChild(card);
+    }
+
+    function exportScores() {
+      const rows = [['Équipe', 'Originalité', 'Prototype', 'Real-Win-Worth', 'Innovation technologique', 'Analyse économique', 'Gestion d’équipe', 'Potentiel de mise en œuvre', 'Proactivité', 'Pitch', 'Respect des consignes', 'Total']];
+      teamsContainer.querySelectorAll('.team-card').forEach(card => {
+        const name = card.querySelector('input[name="teamName"]').value || 'Équipe sans nom';
+        const values = Array.from(card.querySelectorAll('tbody input')).map(input => parseFloat(input.value || '0').toFixed(1));
+        const total = card.querySelector('.total-value').textContent.split(' ')[0];
+        rows.push([name, ...values, total]);
+      });
+
+      if (rows.length === 1) {
+        alert('Ajoutez au moins une équipe avant d’exporter.');
+        return;
+      }
+
+      const csvContent = rows.map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(';')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'evaluation_equipes.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('addTeam').addEventListener('click', addTeam);
+    document.getElementById('exportScores').addEventListener('click', exportScores);
+    document.getElementById('addProject').addEventListener('click', addProject);
+
+    // Initial setup
+    addTeam();
+    addProject();
+  </script>
+</body>
+</html>
