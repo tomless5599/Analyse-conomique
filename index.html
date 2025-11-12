@@ -291,6 +291,72 @@
       color: #0f172a;
     }
 
+    .advanced-insights {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .advanced-insights h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      color: #0f172a;
+    }
+
+    .insight-grid {
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .insight-grid div {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: grid;
+      gap: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    .insight-grid div strong {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #475569;
+      letter-spacing: 0.04em;
+    }
+
+    .discount-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .discount-table th,
+    .discount-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+
+    .discount-table th:first-child,
+    .discount-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .discount-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem 0;
@@ -463,6 +529,84 @@
         <div><strong>Délai de récupération :</strong> <span class="payback">—</span></div>
       </div>
 
+      <div class="advanced-insights" aria-live="polite">
+        <h3>Indicateurs approfondis</h3>
+        <div class="insight-grid">
+          <div>
+            <strong>Indice de profitabilité</strong>
+            <span class="pi">—</span>
+          </div>
+          <div>
+            <strong>Valeur annuelle équivalente</strong>
+            <span class="eaa">—</span>
+          </div>
+          <div>
+            <strong>Flux net cumulé (nominal)</strong>
+            <span class="cumulative">—</span>
+          </div>
+          <div>
+            <strong>ROI moyen annuel</strong>
+            <span class="simple-roi">—</span>
+          </div>
+        </div>
+      </div>
+
+      <table class="discount-table" aria-label="Tableau des flux actualisés">
+        <thead>
+          <tr>
+            <th>Année</th>
+            <th>Flux net (k$)</th>
+            <th>Facteur d'actualisation</th>
+            <th>Flux actualisé (k$)</th>
+            <th>Cumul actualisé (k$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-index="0">
+            <td>Année 0</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+          <tr data-index="1">
+            <td>Année 1</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+          <tr data-index="2">
+            <td>Année 2</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+          <tr data-index="3">
+            <td>Année 3</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+          <tr data-index="4">
+            <td>Année 4</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+          <tr data-index="5">
+            <td>Année 5</td>
+            <td><span data-col="net">—</span></td>
+            <td><span data-col="factor">—</span></td>
+            <td><span data-col="discounted">—</span></td>
+            <td><span data-col="cumulative">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+
       <div class="compliance" aria-live="polite">
         <p><span class="badge" data-check="investment">À vérifier</span> Investissement initial entre 40 k$ et 60 k$.</p>
         <p><span class="badge" data-check="duration">À vérifier</span> Durée de vie = 5 ans (flux remplis pour 5 ans).</p>
@@ -624,11 +768,16 @@
       const residualValueInput = card.querySelector('input[name="residualValue"]');
       const tramInput = card.querySelector('input[name="tram"]');
       const discountInput = card.querySelector('input[name="discountRate"]');
-      const cashflowRows = card.querySelectorAll('tbody tr');
+      const cashflowRows = card.querySelectorAll('.cashflow-table tbody tr');
       const chartCanvas = card.querySelector('.chart-wrapper canvas');
       const npvField = card.querySelector('.npv');
       const irrField = card.querySelector('.irr');
       const paybackField = card.querySelector('.payback');
+      const piField = card.querySelector('.pi');
+      const eaaField = card.querySelector('.eaa');
+      const cumulativeField = card.querySelector('.cumulative');
+      const simpleRoiField = card.querySelector('.simple-roi');
+      const discountRows = Array.from(card.querySelectorAll('.discount-table tbody tr'));
       const badges = {
         investment: card.querySelector('[data-check="investment"]'),
         duration: card.querySelector('[data-check="duration"]'),
@@ -640,6 +789,7 @@
       };
 
       projectsContainer.appendChild(card);
+      clearAdvancedAnalytics();
 
       function updateBadge(badge, ok) {
         if (!badge) return;
@@ -729,10 +879,12 @@
         const initialInvestment = sanitize(parseFloat(initialInvestmentInput.value || '0'));
         const residualValue = sanitize(parseFloat(residualValueInput.value || '0'));
         const flows = [-initialInvestment];
+        const nets = [];
         let yearsCompleted = 0;
         cashflowRows.forEach(row => {
           const year = Number(row.dataset.year);
           const net = computeRowNet(row);
+          nets.push(net);
           let total = net;
           if (includeResidualValue && year === 5) {
             total += residualValue;
@@ -740,7 +892,103 @@
           flows.push(total);
           yearsCompleted = Math.max(yearsCompleted, year);
         });
-        return { flows, yearsCompleted };
+        return { flows, yearsCompleted, nets, initialInvestment, residualValue };
+      }
+
+      function clearDiscountTable() {
+        discountRows.forEach(row => {
+          row.querySelectorAll('[data-col]').forEach(span => {
+            span.textContent = '—';
+          });
+        });
+      }
+
+      function clearAdvancedAnalytics() {
+        piField.textContent = '—';
+        eaaField.textContent = '—';
+        cumulativeField.textContent = '—';
+        simpleRoiField.textContent = '—';
+        clearDiscountTable();
+      }
+
+      function computeEAA(npv, discount, years) {
+        if (!Number.isFinite(npv) || years <= 0) return NaN;
+        if (!Number.isFinite(discount)) return NaN;
+        if (Math.abs(discount) < 1e-7) {
+          return npv / years;
+        }
+        const factor = Math.pow(1 + discount, years);
+        if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-7) {
+          return NaN;
+        }
+        return npv * (discount * factor) / (factor - 1);
+      }
+
+      function updateDiscountTable(cashflows, discount) {
+        if (!Array.isArray(cashflows) || cashflows.length === 0 || !Number.isFinite(discount)) {
+          clearDiscountTable();
+          return;
+        }
+        let cumulative = 0;
+        discountRows.forEach((row, index) => {
+          const netCell = row.querySelector('[data-col="net"]');
+          const factorCell = row.querySelector('[data-col="factor"]');
+          const discountedCell = row.querySelector('[data-col="discounted"]');
+          const cumulativeCell = row.querySelector('[data-col="cumulative"]');
+          const flow = cashflows[index];
+          if (flow === undefined) {
+            netCell.textContent = '—';
+            factorCell.textContent = '—';
+            discountedCell.textContent = '—';
+            cumulativeCell.textContent = '—';
+            return;
+          }
+          let factor;
+          if (index === 0) {
+            factor = 1;
+          } else {
+            const base = 1 + discount;
+            if (Math.abs(base) < 1e-7) {
+              factor = NaN;
+            } else {
+              factor = 1 / Math.pow(base, index);
+            }
+          }
+          if (!Number.isFinite(factor)) {
+            factorCell.textContent = '—';
+            discountedCell.textContent = '—';
+            cumulativeCell.textContent = '—';
+            netCell.textContent = flow.toFixed(2);
+            return;
+          }
+          const discountedValue = flow * factor;
+          cumulative += discountedValue;
+          netCell.textContent = flow.toFixed(2);
+          factorCell.textContent = factor.toFixed(4);
+          discountedCell.textContent = discountedValue.toFixed(2);
+          cumulativeCell.textContent = cumulative.toFixed(2);
+        });
+      }
+
+      function updateAdvancedAnalytics({ cashflows, nets, discount, npv, initialInvestment }) {
+        if (!Array.isArray(cashflows) || cashflows.length === 0) {
+          clearAdvancedAnalytics();
+          return;
+        }
+        const years = Array.isArray(nets) ? nets.length : cashflows.length - 1;
+        const totalNet = cashflows.slice(1).reduce((acc, value) => acc + value, 0);
+        cumulativeField.textContent = Number.isFinite(totalNet) ? formatCurrency(totalNet) : '—';
+
+        const pi = initialInvestment > 0 ? (npv + initialInvestment) / initialInvestment : NaN;
+        piField.textContent = Number.isFinite(pi) ? pi.toFixed(3) : '—';
+
+        const eaa = computeEAA(npv, discount, years);
+        eaaField.textContent = Number.isFinite(eaa) ? formatCurrency(eaa) : '—';
+
+        const roi = initialInvestment > 0 && years > 0 ? (totalNet / years) / initialInvestment : NaN;
+        simpleRoiField.textContent = Number.isFinite(roi) ? formatPercent(roi) : '—';
+
+        updateDiscountTable(cashflows, discount);
       }
 
       function updateAllNets() {
@@ -765,12 +1013,11 @@
       updateChart();
 
       function calculate() {
-        const initialInvestment = sanitize(parseFloat(initialInvestmentInput.value || '0'));
         const tram = sanitize(parseFloat(tramInput.value || '0'));
         const discountRate = sanitize(parseFloat(discountInput.value || '0'));
 
         updateAllNets();
-        const { flows: cashflows, yearsCompleted } = collectCashflows(true);
+        const { flows: cashflows, yearsCompleted, nets, initialInvestment } = collectCashflows(true);
         updateChart();
 
         const discount = discountRate / 100;
@@ -789,6 +1036,8 @@
         updateBadge(badges.payback, Number.isFinite(payback));
         updateBadge(badges.npv, Number.isFinite(npv));
         updateBadge(badges.irr, Number.isFinite(irr));
+
+        updateAdvancedAnalytics({ cashflows, nets, discount, npv, initialInvestment });
       }
 
       function reset() {
@@ -807,6 +1056,7 @@
         });
         updateAllNets();
         updateChart();
+        clearAdvancedAnalytics();
       }
 
       const handleResize = () => updateChart();
